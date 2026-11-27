@@ -1,5 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 
+import { compressPage } from './images';
+
 /**
  * Documentos guardados en el propio teléfono.
  *
@@ -65,8 +67,9 @@ async function importImages(dir: Directory, imagePaths: string[]): Promise<strin
   const names: string[] = [];
   for (const path of imagePaths) {
     const name = `${newId()}.jpg`;
-    const source = new File(toUri(path));
-    await source.copy(new File(dir, name));
+    // Guardamos una versión reducida: el PDF se genera mucho más rápido y ocupa menos.
+    const compressed = await compressPage(toUri(path));
+    await new File(compressed.uri).move(new File(dir, name));
     names.push(name);
   }
   return names;

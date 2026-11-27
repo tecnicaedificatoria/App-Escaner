@@ -146,9 +146,8 @@ export default function DocumentScreen() {
           disabled={busy !== null}
         />
         <Button
-          title="Compartir PDF"
+          title={busy === 'pdf' ? 'Generando PDF…' : 'Compartir PDF'}
           onPress={onShare}
-          loading={busy === 'pdf'}
           disabled={busy !== null || doc.pages.length === 0}
         />
       </View>

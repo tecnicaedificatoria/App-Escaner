@@ -2,10 +2,14 @@ import { File } from 'expo-file-system';
 import { printToFileAsync } from 'expo-print';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 
+import { compressPage } from './images';
 import { documentDirectory, pageUri, type ScannedDocument } from './documents';
 
 // Tamaño A4 en puntos (72 ppp).
 const A4 = { width: 595, height: 842 };
+
+// Por encima de este tamaño una página se considera sin comprimir.
+const LARGE_PAGE_BYTES = 1_500_000;
 
 function safeFileName(name: string): string {
   const cleaned = name
@@ -37,7 +41,17 @@ function buildHtml(images: string[]): string {
 export async function exportPdf(doc: ScannedDocument): Promise<File> {
   if (doc.pages.length === 0) throw new Error('El documento no tiene páginas.');
 
-  const images = await Promise.all(doc.pages.map((page) => new File(pageUri(doc, page)).base64()));
+  const images: string[] = [];
+  for (const page of doc.pages) {
+    const file = new File(pageUri(doc, page));
+    // Las páginas guardadas por versiones anteriores están a resolución completa: se reducen al vuelo.
+    if ((file.info().size ?? 0) > LARGE_PAGE_BYTES) {
+      const { base64 } = await compressPage(file.uri, true);
+      images.push(base64 ?? (await file.base64()));
+    } else {
+      images.push(await file.base64());
+    }
+  }
   const { uri } = await printToFileAsync({
     html: buildHtml(images),
     width: A4.width,
