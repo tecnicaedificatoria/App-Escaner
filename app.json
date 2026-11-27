@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Escáner",
+    "slug": "app-escaner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tecnicaedificatoria.escaner",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tecnicaedificatoria.escaner"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      [
+        "react-native-document-scanner-plugin",
+        {
+          "cameraPermission": "La cámara se usa para escanear tus documentos."
+        }
+      ]
+    ],
+    "scheme": "escaner",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
