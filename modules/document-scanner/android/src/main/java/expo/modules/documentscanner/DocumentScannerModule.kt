@@ -1,6 +1,7 @@
 package expo.modules.documentscanner
 
 import android.app.Activity
+import android.util.Log
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -31,27 +32,31 @@ class DocumentScannerModule : Module() {
         return@AsyncFunction
       }
 
-      val builder = GmsDocumentScannerOptions.Builder()
-        .setGalleryImportAllowed(true)
-        .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
-        .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
-      if (pageLimit != null && pageLimit > 0) {
-        builder.setPageLimit(pageLimit)
-      }
-
       pendingPromise = promise
-      GmsDocumentScanning.getClient(builder.build())
-        .getStartScanIntent(activity)
-        .addOnSuccessListener { intentSender ->
-          try {
-            activity.startIntentSenderForResult(intentSender, REQUEST_CODE, null, 0, 0, 0)
-          } catch (error: Exception) {
-            finishWithError("No se pudo abrir el escáner: ${error.message}", error)
+      try {
+        val builder = GmsDocumentScannerOptions.Builder()
+          .setGalleryImportAllowed(true)
+          .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+          .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+        if (pageLimit != null && pageLimit > 0) {
+          builder.setPageLimit(pageLimit)
+        }
+
+        GmsDocumentScanning.getClient(builder.build())
+          .getStartScanIntent(activity)
+          .addOnSuccessListener { intentSender ->
+            try {
+              activity.startIntentSenderForResult(intentSender, REQUEST_CODE, null, 0, 0, 0)
+            } catch (error: Throwable) {
+              finishWithError("No se pudo abrir el escáner", error)
+            }
           }
-        }
-        .addOnFailureListener { error ->
-          finishWithError("No se pudo abrir el escáner: ${error.message}", error)
-        }
+          .addOnFailureListener { error ->
+            finishWithError("No se pudo abrir el escáner", error)
+          }
+      } catch (error: Throwable) {
+        finishWithError("Error al iniciar el escáner", error)
+      }
     }
 
     OnActivityResult { _, payload ->
@@ -73,7 +78,10 @@ class DocumentScannerModule : Module() {
   private fun finishWithError(message: String, cause: Throwable?) {
     val promise = pendingPromise ?: return
     pendingPromise = null
-    promise.reject("ERR_SCANNER", message, cause)
+    // Incluye las primeras líneas de la traza para poder diagnosticar fallos en el móvil.
+    val trace = cause?.let { Log.getStackTraceString(it).lineSequence().take(8).joinToString("\n") }
+    Log.e("DocumentScanner", message, cause)
+    promise.reject("ERR_SCANNER", if (trace != null) "$message\n\n$trace" else message, cause)
   }
 
   companion object {

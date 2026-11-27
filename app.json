@@ -32,6 +32,15 @@
         {
           "cameraPermission": "La cámara se usa para escanear tus documentos."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
+        }
       ]
     ],
     "scheme": "escaner",
